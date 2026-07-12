@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Onboarding Progress</title>
+    <style>
+      body { font-family: 'Inter', 'Segoe UI', sans-serif; background: linear-gradient(135deg, #081120 0%, #11253d 45%, #1d4ed8 100%); margin: 0; padding: 24px; color: #f8fafc; }
+      .page { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+      .card { background: rgba(15,58,122,0.92); border: 1px solid rgba(255,255,255,0.18); border-radius: 24px; padding: 24px; box-shadow: 0 18px 48px rgba(8,17,32,0.25); }
+      .eyebrow { text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.75rem; opacity: 0.75; margin: 0 0 8px; }
+      h1 { margin: 0 0 6px; font-size: 1.8rem; }
+      .subtitle { opacity: 0.85; margin: 0; line-height: 1.5; }
+
+      .stats-row { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+      .stat-card { padding: 18px 20px; }
+      .stat-card .stat-value { font-size: 1.7rem; font-weight: 700; }
+      .stat-card .stat-label { opacity: 0.75; font-size: 0.85rem; margin-top: 4px; }
+
+      .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+
+      .search-row { margin-bottom: 14px; }
+      .search-row input { width: 100%; box-sizing: border-box; border: 1px solid rgba(56,189,248,0.55); border-radius: 12px; padding: 12px 14px; background: rgba(37,99,235,0.32); color: #f8fafc; font-size: 1rem; }
+      .search-row input::placeholder { color: rgba(248,250,252,0.6); }
+
+      .employee-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; }
+      .employee-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,0.06); cursor: pointer; border: 1px solid transparent; }
+      .employee-list li:hover { background: rgba(255,255,255,0.14); }
+      .employee-list li.active { background: rgba(56,189,248,0.2); border-color: rgba(56,189,248,0.5); }
+      .employee-name { font-weight: 600; }
+      .employee-dept { opacity: 0.7; font-size: 0.82rem; }
+      .completion-tag { font-size: 0.85rem; padding: 4px 10px; border-radius: 999px; font-weight: 600; }
+      .tag-good { background: rgba(74, 222, 128, 0.2); color: #86efac; }
+      .tag-warn { background: rgba(251, 191, 36, 0.2); color: #fcd34d; }
+      .tag-risk { background: rgba(248, 113, 113, 0.2); color: #fca5a5; }
+      .empty-note { opacity: 0.7; }
+
+      .pill { display: inline-block; padding: 6px 10px; background: rgba(255,255,255,0.14); color: #f8fafc; border-radius: 999px; margin-top: 8px; margin-right: 8px; font-size: 0.85rem; }
+      .progress-track { width: 100%; height: 10px; border-radius: 999px; background: rgba(255,255,255,0.12); overflow: hidden; margin-top: 12px; }
+      .progress-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #38bdf8, #2563eb); }
+
+      @media (max-width: 760px) {
+        .layout { grid-template-columns: 1fr; }
+        .stats-row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="card">
+        <p class="eyebrow">HR Overview</p>
+        <h1>Onboarding Progress Tracker</h1>
+        <p class="subtitle">Monitor every new hire's onboarding in one place — search, compare, and jump straight to whoever needs attention.</p>
+      </div>
+
+      <div class="stats-row">
+        <div class="card stat-card">
+          <div class="stat-value" id="statTotal">—</div>
+          <div class="stat-label">Employees onboarding</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-value" id="statAvg">—</div>
+          <div class="stat-label">Average completion</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-value" id="statRisk">—</div>
+          <div class="stat-label">Below 50% complete</div>
+        </div>
+      </div>
+
+      <div class="layout">
+        <div class="card">
+          <div class="search-row">
+            <input id="searchInput" type="text" placeholder="Search employees by name or department..." oninput="handleSearch()" />
+          </div>
+          <ul id="employeeList" class="employee-list"></ul>
+        </div>
+
+        <div class="card" id="result">Loading…</div>
+      </div>
+    </div>
+
+    <script>
+      let allEmployees = [];
+      let selectedId = null;
+
+      function escapeHtml(text) {
+        return String(text)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      function completionTagClass(percent) {
+        if (percent >= 75) return 'tag-good';
+        if (percent >= 40) return 'tag-warn';
+        return 'tag-risk';
+      }
+
+      function renderStats() {
+        const total = allEmployees.length;
+        const avg = total ? (allEmployees.reduce((sum, e) => sum + e.completion_percentage, 0) / total) : 0;
+        const atRisk = allEmployees.filter((e) => e.completion_percentage < 50).length;
+
+        document.getElementById('statTotal').textContent = total;
+        document.getElementById('statAvg').textContent = `${avg.toFixed(1)}%`;
+        document.getElementById('statRisk').textContent = atRisk;
+      }
+
+      function renderEmployeeList(employees) {
+        const listEl = document.getElementById('employeeList');
+
+        if (employees.length === 0) {
+          listEl.innerHTML = '<li class="empty-note">No employees match your search.</li>';
+          return;
+        }
+
+        listEl.innerHTML = employees
+          .map(
+            (employee) => `
+              <li class="${employee.id === selectedId ? 'active' : ''}" onclick="loadProgress(${employee.id})">
+                <span>
+                  <div class="employee-name">${escapeHtml(employee.name)}</div>
+                  <div class="employee-dept">${escapeHtml(employee.department)}</div>
+                </span>
+                <span class="completion-tag ${completionTagClass(employee.completion_percentage)}">${employee.completion_percentage}%</span>
+              </li>
+            `
+          )
+          .join('');
+      }
+
+      function handleSearch() {
+        const query = document.getElementById('searchInput').value.trim().toLowerCase();
+
+        if (!query) {
+          renderEmployeeList(allEmployees);
+          return;
+        }
+
+        const matches = allEmployees.filter((employee) =>
+          employee.name.toLowerCase().includes(query) || employee.department.toLowerCase().includes(query)
+        );
+        renderEmployeeList(matches);
+      }
+
+      async function loadEmployeeDirectory() {
+        try {
+          const response = await fetch('/api/admin/employees');
+          allEmployees = response.ok ? await response.json() : [];
+        } catch {
+          allEmployees = [];
+        }
+
+        allEmployees.sort((a, b) => a.completion_percentage - b.completion_percentage);
+        renderStats();
+        renderEmployeeList(allEmployees);
+      }
+
+      async function loadProgress(employeeId) {
+        const id = employeeId || (allEmployees[0] && allEmployees[0].id) || 1;
+        selectedId = id;
+        renderEmployeeList(
+          document.getElementById('searchInput').value.trim() ? allEmployees.filter((e) =>
+            e.name.toLowerCase().includes(document.getElementById('searchInput').value.trim().toLowerCase()) ||
+            e.department.toLowerCase().includes(document.getElementById('searchInput').value.trim().toLowerCase())
+          ) : allEmployees
+        );
+
+        const response = await fetch(`/api/progress/${id}`);
+
+        if (!response.ok) {
+          document.getElementById('result').innerHTML = '<p class="empty-note">Employee not found.</p>';
+          return;
+        }
+
+        const data = await response.json();
+        document.getElementById('result').innerHTML = `
+          <p class="eyebrow">Employee snapshot</p>
+          <h2 style="margin: 0 0 4px;">${escapeHtml(data.name)}</h2>
+          <p class="subtitle" style="margin-bottom: 14px;">${escapeHtml(data.role)} · ${escapeHtml(data.department)}</p>
+          <div class="pill">Completed: ${data.completed_tasks}</div>
+          <div class="pill">Pending: ${data.pending_tasks}</div>
+          <div class="pill">Uploads: ${data.uploaded_files}</div>
+          <div class="progress-track"><div class="progress-fill" style="width: ${data.completion_percentage}%;"></div></div>
+          <p class="subtitle" style="margin-top: 8px;">${data.completion_percentage}% complete</p>
+        `;
+      }
+
+      loadEmployeeDirectory().then(() => loadProgress(1));
+    </script>
+  </body>
+</html>

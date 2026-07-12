@@ -1,0 +1,71 @@
+[
+  {
+    "title": "Time Off Policy",
+    "keywords": [
+      "time off",
+      "vacation",
+      "leave",
+      "pto"
+    ],
+    "content": "Submit your leave request through HR and await manager approval."
+  },
+  {
+    "title": "Remote Work Policy",
+    "keywords": [
+      "remote",
+      "work from home",
+      "wfh"
+    ],
+    "content": "Remote work requests should be discussed with your manager and approved in advance."
+  },
+  {
+    "title": "Equipment Policy",
+    "keywords": [
+      "equipment",
+      "laptop",
+      "device",
+      "office gear"
+    ],
+    "content": "Equipment requests are handled by IT and require manager approval."
+  },
+  {
+    "title": "Task Help",
+    "keywords": [
+      "stuck",
+      "task",
+      "blocked",
+      "blocker"
+    ],
+    "content": "If you're stuck on a task: check the task details on your Dashboard checklist first, upload any document it asks for, and if you're still blocked, message your manager directly. Tell me the task name and I can point you to the right policy if that's what's holding you up."
+  },
+  {
+    "title": "Raise a Concern",
+    "keywords": [
+      "concern",
+      "raise a concern",
+      "problem",
+      "uncomfortable",
+      "complaint"
+    ],
+    "content": "This is a private space — nothing you share here is visible to your manager. Go ahead and describe what's on your mind. For anything I can't resolve, I'll connect you with a real HR contact so it gets proper attention."
+  },
+  {
+    "title": "Policy Question",
+    "keywords": [
+      "question about a policy",
+      "policy question",
+      "what is the policy"
+    ],
+    "content": "I can help with the Time Off, Remote Work, and Equipment policies right now — just ask about one of those by name, or tell me what situation you're in and I'll point you to the relevant policy."
+  },
+  {
+    "title": "Document Help",
+    "keywords": [
+      "help with a document",
+      "document",
+      "upload",
+      "file"
+    ],
+    "content": "You can upload documents straight from a task on your Dashboard checklist — open the task and use the upload option. If you're not sure which document a task needs, tell me the task name and I'll clarify what's required."
+  }
+]
